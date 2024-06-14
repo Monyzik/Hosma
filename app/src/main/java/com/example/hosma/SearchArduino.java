@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -23,6 +24,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,8 +34,10 @@ public class SearchArduino extends AppCompatActivity {
 
     BluetoothAdapter bluetoothAdapter;
     BluetoothManager bluetoothManager;
-    Button refresh_btn;
-    Button back_btn;
+
+    SwipeRefreshLayout swipeRefreshLayout;
+
+    ImageView back_btn;
     RecyclerView availableRecyclerView;
     SearchArduinoAdapter availableAdapter;
     ArrayList<BluetoothDevice> availableArrayList = new ArrayList<>();
@@ -54,8 +58,10 @@ public class SearchArduino extends AppCompatActivity {
                     Log.e("e", e.getMessage());
                 }
                 String deviceHardwareAddress = device.getAddress(); // MAC address
-                if (deviceName != null) availableArrayList.add(device);
-//                adapter.notifyItemInserted(arrayList.size() - 1);
+                if (deviceName != null) {
+                    availableArrayList.add(device);
+//                    availableAdapter.notifyItemInserted(availableArrayList.size() - 1);
+                }
                 availableAdapter.notifyDataSetChanged();
                 System.out.println(deviceName);
             }
@@ -69,9 +75,9 @@ public class SearchArduino extends AppCompatActivity {
 
         activity = this;
 
-        refresh_btn = findViewById(R.id.refresh_btn);
         back_btn = findViewById(R.id.back_btn);
 
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         availableRecyclerView = findViewById(R.id.rv_bluetooth_devices);
         availableAdapter = new SearchArduinoAdapter(availableArrayList);
@@ -106,11 +112,18 @@ public class SearchArduino extends AppCompatActivity {
 
         searchDevices();
 
-
-        refresh_btn.setOnClickListener(new View.OnClickListener() {
+        back_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                finish();
+            }
+        });
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
                 searchDevices();
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
 

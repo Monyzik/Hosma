@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Hosma</string>
     <string name="no_bluetooth_connection">You haven`t got bluetooth connection</string>
+    <string name="available_devises">Available devices</string>
 </resources>

@@ -1,10 +1,10 @@
 package com.example.hosma;
 
-public class Devise {
+public class Device {
     private long id;
     private String name;
 
-    public Devise(long id, String name) {
+    public Device(long id, String name) {
         this.id = id;
         this.name = name;
     }

@@ -14,8 +14,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.ArrayList;
 
-public class DevisesRecyclerViewAdapter extends RecyclerView.Adapter<DevisesRecyclerViewAdapter.ViewHolder> {
-    private ArrayList <Devise> devises;
+public class DevicesRecyclerViewAdapter extends RecyclerView.Adapter<DevicesRecyclerViewAdapter.ViewHolder> {
+    private ArrayList <Device> devices;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView deviceImage;
@@ -45,8 +45,8 @@ public class DevisesRecyclerViewAdapter extends RecyclerView.Adapter<DevisesRecy
         }
     }
 
-    public DevisesRecyclerViewAdapter(ArrayList <Devise> newDevices) {
-        devises = newDevices;
+    public DevicesRecyclerViewAdapter(ArrayList <Device> newDevices) {
+        devices = newDevices;
     }
 
     @NonNull
@@ -59,9 +59,9 @@ public class DevisesRecyclerViewAdapter extends RecyclerView.Adapter<DevisesRecy
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Devise devise = devises.get(position);
+        Device device = devices.get(position);
         holder.getDeviceImage().setImageResource(R.drawable.baseline_lightbulb);
-        holder.getDeviceNameTextView().setText(devise.getName());
+        holder.getDeviceNameTextView().setText(device.getName());
 
         holder.getDeviceSwitcher().setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -78,6 +78,6 @@ public class DevisesRecyclerViewAdapter extends RecyclerView.Adapter<DevisesRecy
 
     @Override
     public int getItemCount() {
-        return devises.size();
+        return devices.size();
     }
 }
