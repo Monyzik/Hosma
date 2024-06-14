@@ -35,12 +35,8 @@ public class SearchArduino extends AppCompatActivity {
     Button refresh_btn;
     Button back_btn;
     RecyclerView availableRecyclerView;
-    RecyclerView connectedRecyclerView;
     SearchArduinoAdapter availableAdapter;
-    SearchArduinoAdapter connectedAdapter;
-
     ArrayList<BluetoothDevice> availableArrayList = new ArrayList<>();
-    ArrayList<BluetoothDevice> connectedArrayList = new ArrayList<>();
 
     Activity activity;
 
@@ -76,8 +72,6 @@ public class SearchArduino extends AppCompatActivity {
         refresh_btn = findViewById(R.id.refresh_btn);
         back_btn = findViewById(R.id.back_btn);
 
-        connectedRecyclerView = findViewById(R.id.connected_recycler_view);
-        connectedAdapter = new SearchArduinoAdapter(connectedArrayList);
 
         availableRecyclerView = findViewById(R.id.rv_bluetooth_devices);
         availableAdapter = new SearchArduinoAdapter(availableArrayList);
@@ -107,13 +101,10 @@ public class SearchArduino extends AppCompatActivity {
 
 
 
-        connectedRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        connectedRecyclerView.setAdapter(connectedAdapter);
         availableRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         availableRecyclerView.setAdapter(availableAdapter);
 
         searchDevices();
-        connectedArrayList = new ArrayList<>(bluetoothAdapter.getBondedDevices());
 
 
         refresh_btn.setOnClickListener(new View.OnClickListener() {
@@ -135,15 +126,14 @@ public class SearchArduino extends AppCompatActivity {
         } catch (SecurityException e) {
             Log.e("e", e.getMessage());
         }
-        try {
-            for (BluetoothDevice device: bluetoothAdapter.getBondedDevices()) {
-                connectedArrayList.add(device);
-            }
-            connectedAdapter.notifyDataSetChanged();
-        } catch (SecurityException e) {
-            Log.e("e", e.getMessage());
-        }
-        System.out.println(connectedArrayList + "fffffffffffffff");
+//        try {
+//            for (BluetoothDevice device: bluetoothAdapter.getBondedDevices()) {
+//                connectedArrayList.add(device);
+//            }
+//            connectedAdapter.notifyDataSetChanged();
+//        } catch (SecurityException e) {
+//            Log.e("e", e.getMessage());
+//        }
 
     }
 
