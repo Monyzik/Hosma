@@ -6,7 +6,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    <uses-feature android:name="android.hardware.bluetooth"/>
 
     <application
         android:allowBackup="true"
@@ -27,6 +32,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SearchArduino"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
