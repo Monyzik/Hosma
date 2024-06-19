@@ -29,10 +29,14 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -51,7 +55,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SearchArduino extends AppCompatActivity {
+public class SearchArduino extends Fragment {
 
     public static String EXTRA_DEVICE_ADDRESS = "device_address";
 
@@ -64,6 +68,7 @@ public class SearchArduino extends AppCompatActivity {
     RecyclerView availableRecyclerView;
     SearchArduinoAdapter availableAdapter;
     ArrayList<BluetoothDevice> availableArrayList = new ArrayList<>();
+    MainActivity.MainActivityInterface mainActivityInterface;
 
     Activity activity;
 
@@ -89,35 +94,44 @@ public class SearchArduino extends AppCompatActivity {
         }
     };
 
+
+    public SearchArduino() {
+        super(R.layout.search_arduino);
+    }
+    public SearchArduino(MainActivity.MainActivityInterface mainActivityInterface) {
+        super(R.layout.search_arduino);
+        this.mainActivityInterface = mainActivityInterface;
+    }
+
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.search_arduino);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        activity = this;
+        activity = getActivity();
 
-        back_btn = findViewById(R.id.back_btn);
+        back_btn = view.findViewById(R.id.back_btn);
 
-        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
 
-        availableRecyclerView = findViewById(R.id.rv_bluetooth_devices);
+        availableRecyclerView = view.findViewById(R.id.rv_bluetooth_devices);
         availableAdapter = new SearchArduinoAdapter(availableArrayList, mDeviceClickListener);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        bluetoothManager = getSystemService(BluetoothManager.class);
+        bluetoothManager = activity.getSystemService(BluetoothManager.class);
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(receiver, filter);
+        activity.registerReceiver(receiver, filter);
 
 
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
+        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.BLUETOOTH_CONNECT}, 2);
+                ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.BLUETOOTH_CONNECT}, 2);
                 return;
             }
         }
         if (bluetoothAdapter == null) {
-            Toast.makeText(this, "Ваше устройство не поддерживает Bluetooth", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Ваше устройство не поддерживает Bluetooth", Toast.LENGTH_SHORT).show();
         }
         if (!bluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -125,7 +139,7 @@ public class SearchArduino extends AppCompatActivity {
         }
 
 
-        availableRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        availableRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
         availableRecyclerView.setAdapter(availableAdapter);
 
         searchDevices();
@@ -133,7 +147,9 @@ public class SearchArduino extends AppCompatActivity {
         back_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+
+                getParentFragmentManager().beginTransaction()
+                        .remove(SearchArduino.this).commit();
             }
         });
 
@@ -152,7 +168,7 @@ public class SearchArduino extends AppCompatActivity {
         @Override
         public void onItemClick(BluetoothDevice item) {
             try {
-                AlertDialog.Builder builder = new AlertDialog.Builder(SearchArduino.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setCancelable(true);
                 builder.setTitle(item.getName());
                 builder.setMessage("Mac adress " + item.getAddress());
@@ -161,8 +177,8 @@ public class SearchArduino extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent();
                         intent.putExtra(EXTRA_DEVICE_ADDRESS, item.getAddress());
-                        setResult(Activity.RESULT_OK, intent);
-                        finish();
+//                        setResult(Activity.RESULT_OK, intent);
+//                        finish();
                     }
                 });
 
@@ -204,7 +220,7 @@ public class SearchArduino extends AppCompatActivity {
 
                 public void requestBluetoothPermissions() {
 
-                    final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    final LocationManager manager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
 
                     if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                         Toast.makeText(activity, "Turn on your location to find bluetooth devices", Toast.LENGTH_SHORT).show();
@@ -215,8 +231,8 @@ public class SearchArduino extends AppCompatActivity {
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 
-                        if ((this.checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
-                                || (this.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
+                        if ((getActivity().checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
+                                || (getActivity().checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
 
                             if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
                                     android.Manifest.permission.BLUETOOTH_SCAN)) {
@@ -234,11 +250,19 @@ public class SearchArduino extends AppCompatActivity {
 
 
                 @Override
-                protected void onDestroy() {
+                public void onDestroy() {
                     super.onDestroy();
                     if (bluetoothAdapter != null) {
-                        bluetoothAdapter.cancelDiscovery();
+                        try {
+                            bluetoothAdapter.cancelDiscovery();
+                        }catch (SecurityException e) {
+                            Log.e("SecurityException", e.getMessage());
+                        }
                     }
-                    unregisterReceiver(receiver);
+                        mainActivityInterface.unregisterReceiver(receiver);
                 }
-            }
+
+
+
+
+}

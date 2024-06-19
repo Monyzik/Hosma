@@ -4,16 +4,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -38,6 +39,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements ServiceConnection, SerialListener {
@@ -52,25 +54,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     boolean initialStart = true;
 
-    FloatingActionButton addDeviceButton;
 
     BluetoothArduinoService service;
     String deviceAddress;
 
-    RecyclerView devisesRecyclerView;
-    DevicesRecyclerViewAdapter devicesRecyclerViewAdapter;
 
-    BluetoothArduinoService bluetoothArduinoService;
-
-    ArrayList<Device> devices = new ArrayList<>();
-    BluetoothAdapter bluetoothAdapter;
-    BluetoothSocket socket;
-
-    Button search_arduino_btn;
-
-    OutputStream outputStream;
-
-    Bundle arguments;
 
     FragmentManager fragmentManager;
 
@@ -80,40 +68,49 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        addDeviceButton = findViewById(R.id.add_new_device_button);
-        search_arduino_btn = findViewById(R.id.search_ard_btn);
-
-        devisesRecyclerView = findViewById(R.id.devises_recycler_view);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        devicesRecyclerViewAdapter = new DevicesRecyclerViewAdapter(devices);
-        devisesRecyclerView.setLayoutManager(layoutManager);
-        devisesRecyclerView.setAdapter(devicesRecyclerViewAdapter);
-
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        this.bindService(new Intent(this, BluetoothArduinoService.class), this, Context.BIND_AUTO_CREATE);
-
-
-
-        addDeviceButton.setOnClickListener(new View.OnClickListener() {
+        MainPageFragment mainPageFragment = new MainPageFragment(new MainActivityInterface() {
             @Override
-            public void onClick(View v) {
-                devices.add(new Device(1231, "Cats..."));
-                devicesRecyclerViewAdapter.notifyItemInserted(devices.size() - 1);
-                send("1");
+            public ServiceConnection getServiceConnection() {
+                return (ServiceConnection) MainActivity.this;
             }
-        });
 
-        search_arduino_btn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, SearchArduino.class);
-                startActivityForResult(i, REQUEST_CONNECT_DEVICE);
+            public void sendFunction(String message) {
+                send(message);
             }
+
+            @Override
+            public void unregisterReceiver(BroadcastReceiver receiver) {
+
+            }
+
         });
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_container_view, mainPageFragment, null)
+                .commit();
+
 
     }
+    @Override
+    public void onBackPressed() {
+
+        int count = getSupportFragmentManager().getFragments().size();
+
+        if (count == 1) {
+            super.onBackPressed();
+        }
+        else {
+            List<Fragment> fragments = getSupportFragmentManager().getFragments();
+            getSupportFragmentManager().beginTransaction().remove(fragments.get(fragments.size() - 1)).commit();
+            getSupportFragmentManager().beginTransaction().show(fragments.get(fragments.size() - 2)).commit();
+        }
+
+    }
+
+    interface MainActivityCommunicator{
+        void onWeekChanged(int numberOfWeek);
+    }
+
 
 
     @Override
@@ -338,7 +335,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 //            throw new IllegalStateException(e);
 //        }
 //    }
+    public interface MainActivityInterface {
+    ServiceConnection getServiceConnection();
+    void sendFunction(String message);
 
+    void unregisterReceiver(BroadcastReceiver receiver);
+}
 
 
 }
