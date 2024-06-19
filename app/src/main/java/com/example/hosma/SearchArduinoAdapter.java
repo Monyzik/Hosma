@@ -32,10 +32,6 @@ public class SearchArduinoAdapter extends RecyclerView.Adapter<SearchArduinoAdap
         void onItemClick(BluetoothDevice item);
     }
 
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
-    BluetoothSocket socket;
-
     OnItemClickListener listener;
 
     ArrayList<BluetoothDevice> arrayList = new ArrayList<>();

@@ -15,7 +15,13 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import java.util.ArrayList;
 
 public class DevicesRecyclerViewAdapter extends RecyclerView.Adapter<DevicesRecyclerViewAdapter.ViewHolder> {
+
+    public interface OnItemSwitchListener {
+        void OnItemSwitch(Device device, boolean isChecked);
+    }
     private ArrayList <Device> devices;
+
+    OnItemSwitchListener listener;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView deviceImage;
@@ -32,6 +38,20 @@ public class DevicesRecyclerViewAdapter extends RecyclerView.Adapter<DevicesRecy
 
         }
 
+        public void bind(final Device device, final OnItemSwitchListener listener) {
+            deviceSwitcher.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    listener.OnItemSwitch(device, isChecked);
+                    if (isChecked) {
+                        deviceImage.setImageResource(R.drawable.baseline_lightbulb_yellow);
+                    } else {
+                        deviceImage.setImageResource(R.drawable.baseline_lightbulb);
+                    }
+                }
+            });
+        }
+
         public TextView getDeviceNameTextView() {
             return deviceNameTextView;
         }
@@ -45,8 +65,9 @@ public class DevicesRecyclerViewAdapter extends RecyclerView.Adapter<DevicesRecy
         }
     }
 
-    public DevicesRecyclerViewAdapter(ArrayList <Device> newDevices) {
+    public DevicesRecyclerViewAdapter(ArrayList <Device> newDevices, OnItemSwitchListener listener) {
         devices = newDevices;
+        this.listener = listener;
     }
 
     @NonNull
@@ -63,17 +84,18 @@ public class DevicesRecyclerViewAdapter extends RecyclerView.Adapter<DevicesRecy
         holder.getDeviceImage().setImageResource(R.drawable.baseline_lightbulb);
         holder.getDeviceNameTextView().setText(device.getName());
 
-        holder.getDeviceSwitcher().setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    holder.getDeviceImage().setImageResource(R.drawable.baseline_lightbulb_yellow);
-                } else {
-                    holder.getDeviceImage().setImageResource(R.drawable.baseline_lightbulb);
-                }
-            }
-        });
+        holder.bind(device, listener);
 
+//        holder.getDeviceSwitcher().setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                if (isChecked) {
+//                    holder.getDeviceImage().setImageResource(R.drawable.baseline_lightbulb_yellow);
+//                } else {
+//                    holder.getDeviceImage().setImageResource(R.drawable.baseline_lightbulb);
+//                }
+//            }
+//        });
     }
 
     @Override

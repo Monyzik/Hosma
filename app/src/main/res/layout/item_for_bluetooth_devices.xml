@@ -11,6 +11,7 @@
         android:layout_marginStart="@dimen/simple_margin"
         android:layout_marginTop="@dimen/simple_margin"
         android:layout_marginEnd="@dimen/simple_margin"
+        app:cardCornerRadius="@dimen/simple_margin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -19,21 +20,34 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <ImageView
+                android:id="@+id/bluetooth_device_image_view"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/baseline_bluetooth_24"
+                android:layout_marginStart="@dimen/simple_margin"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
             <TextView
                 android:id="@+id/bluetooth_device_name"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:gravity="left"
                 android:padding="@dimen/simple_margin"
-                android:text="TextView"
-                android:textSize="18sp" />
+                android:text="Device name"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/bluetooth_device_image_view"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/is_connected"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Connected"
+                android:text="@string/connected"
                 android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="@+id/bluetooth_device_name"
                 app:layout_constraintEnd_toEndOf="parent"

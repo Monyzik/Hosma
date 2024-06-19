@@ -53,6 +53,7 @@ import com.google.android.gms.tasks.Task;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class SearchArduino extends Fragment {
@@ -68,8 +69,6 @@ public class SearchArduino extends Fragment {
     RecyclerView availableRecyclerView;
     SearchArduinoAdapter availableAdapter;
     ArrayList<BluetoothDevice> availableArrayList = new ArrayList<>();
-    MainActivity.MainActivityInterface mainActivityInterface;
-
     Activity activity;
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -97,10 +96,6 @@ public class SearchArduino extends Fragment {
 
     public SearchArduino() {
         super(R.layout.search_arduino);
-    }
-    public SearchArduino(MainActivity.MainActivityInterface mainActivityInterface) {
-        super(R.layout.search_arduino);
-        this.mainActivityInterface = mainActivityInterface;
     }
 
 
@@ -148,8 +143,12 @@ public class SearchArduino extends Fragment {
             @Override
             public void onClick(View v) {
 
+                List<Fragment> fragments = getParentFragmentManager().getFragments();
+                getParentFragmentManager().beginTransaction()
+                        .show(fragments.get(fragments.size() - 2)).commit();
                 getParentFragmentManager().beginTransaction()
                         .remove(SearchArduino.this).commit();
+
             }
         });
 
@@ -164,48 +163,55 @@ public class SearchArduino extends Fragment {
 
     }
 
-    private SearchArduinoAdapter.OnItemClickListener mDeviceClickListener = new SearchArduinoAdapter.OnItemClickListener() {
-        @Override
-        public void onItemClick(BluetoothDevice item) {
-            try {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setCancelable(true);
-                builder.setTitle(item.getName());
-                builder.setMessage("Mac adress " + item.getAddress());
-                builder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent();
-                        intent.putExtra(EXTRA_DEVICE_ADDRESS, item.getAddress());
-//                        setResult(Activity.RESULT_OK, intent);
-//                        finish();
-                    }
-                });
+    private SearchArduinoAdapter.OnItemClickListener mDeviceClickListener = item -> {
+        try {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setCancelable(true);
+            builder.setTitle(item.getName());
+            builder.setMessage("Mac adress " + item.getAddress());
+            builder.setPositiveButton(R.string.connect, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Bundle args = new Bundle();
+                    args.putString("device", item.getAddress());
+                    Fragment fragment = new MainPageFragment();
+                    fragment.setArguments(args);
+                    List<Fragment> fragments = getParentFragmentManager().getFragments();
+                    System.out.println(getParentFragmentManager().getFragments());
+                    getParentFragmentManager().beginTransaction().remove(fragments.get(fragments.size() - 2)).commit();
+                    getParentFragmentManager().beginTransaction().replace(R.id.fragment_container_view, fragment, "terminal").addToBackStack(null).commit();
 
-                builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
+//                        List<Fragment> fragments = getParentFragmentManager().getFragments();
+//                        getParentFragmentManager().beginTransaction()
+//                                .show(fragments.get(fragments.size() - 2)).commit();
+//                        getParentFragmentManager().beginTransaction()
+//                                .remove(SearchArduino.this).commit();
+                }
+            });
 
-                builder.show();
-            } catch (SecurityException e) {
-                Log.e("Security exception", e.getMessage());
-            }
+            builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
 
+            builder.show();
+        } catch (SecurityException e) {
+            Log.e("Security exception", e.getMessage());
         }
+
     };
 
-                public void searchDevices() {
-                    availableArrayList.clear();
-                    availableAdapter.notifyDataSetChanged();
-                    requestBluetoothPermissions();
-                    try {
-                        bluetoothAdapter.startDiscovery();
-                    } catch (SecurityException e) {
-                        Log.e("e", e.getMessage());
-                    }
+    public void searchDevices() {
+        availableArrayList.clear();
+        availableAdapter.notifyDataSetChanged();
+        requestBluetoothPermissions();
+        try {
+            bluetoothAdapter.startDiscovery();
+        } catch (SecurityException e) {
+            Log.e("e", e.getMessage());
+        }
 //        try {
 //            for (BluetoothDevice device: bluetoothAdapter.getBondedDevices()) {
 //                connectedArrayList.add(device);
@@ -215,54 +221,50 @@ public class SearchArduino extends Fragment {
 //            Log.e("e", e.getMessage());
 //        }
 
+    }
+
+
+    public void requestBluetoothPermissions() {
+        final LocationManager manager = (LocationManager) requireActivity().getSystemService(Context.LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER) && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            Toast.makeText(activity, "Turn on your location to find bluetooth devices", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+        }
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+            if ((getActivity().checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
+                    || (getActivity().checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
+
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                        android.Manifest.permission.BLUETOOTH_SCAN)) {
+
+                } else {
+                    Log.w(getClass().getName(), "requestBluetoothPermissions() BLUETOOTH_SCAN AND BLUETOOTH_CONNECT permissions needed => requesting them...");
+
+                    this.requestPermissions(new String[]{
+                            android.Manifest.permission.BLUETOOTH_SCAN, android.Manifest.permission.BLUETOOTH_CONNECT
+                    }, 111);
                 }
+            }
+        }
+    }
 
 
-                public void requestBluetoothPermissions() {
-
-                    final LocationManager manager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-
-                    if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                        Toast.makeText(activity, "Turn on your location to find bluetooth devices", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(intent);
-                    }
-
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-
-                        if ((getActivity().checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED)
-                                || (getActivity().checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)) {
-
-                            if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                                    android.Manifest.permission.BLUETOOTH_SCAN)) {
-
-                            } else {
-                                Log.w(getClass().getName(), "requestBluetoothPermissions() BLUETOOTH_SCAN AND BLUETOOTH_CONNECT permissions needed => requesting them...");
-
-                                this.requestPermissions(new String[]{
-                                        android.Manifest.permission.BLUETOOTH_SCAN, android.Manifest.permission.BLUETOOTH_CONNECT
-                                }, 111);
-                            }
-                        }
-                    }
-                }
-
-
-                @Override
-                public void onDestroy() {
-                    super.onDestroy();
-                    if (bluetoothAdapter != null) {
-                        try {
-                            bluetoothAdapter.cancelDiscovery();
-                        }catch (SecurityException e) {
-                            Log.e("SecurityException", e.getMessage());
-                        }
-                    }
-                        mainActivityInterface.unregisterReceiver(receiver);
-                }
-
-
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (bluetoothAdapter != null) {
+            try {
+                bluetoothAdapter.cancelDiscovery();
+            } catch (SecurityException e) {
+                Log.e("SecurityException", e.getMessage());
+            }
+        }
+        requireActivity().unregisterReceiver(receiver);
+    }
 
 
 }

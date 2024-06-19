@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements ServiceConnection, SerialListener {
+public class MainActivity extends AppCompatActivity  {
 
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -52,41 +52,24 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     Connected connected = Connected.False;
 
-    boolean initialStart = true;
-
-
-    BluetoothArduinoService service;
-    String deviceAddress;
-
-
-
-    FragmentManager fragmentManager;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        MainPageFragment mainPageFragment = new MainPageFragment(new MainActivityInterface() {
-            @Override
-            public ServiceConnection getServiceConnection() {
-                return (ServiceConnection) MainActivity.this;
-            }
-
-            @Override
-            public void sendFunction(String message) {
-                send(message);
-            }
-
-            @Override
-            public void unregisterReceiver(BroadcastReceiver receiver) {
-
-            }
-
-        });
+//        MainPageFragment mainPageFragment = new MainPageFragment(new MainActivityInterface() {
+//            @Override
+//            public ServiceConnection getServiceConnection() {
+//                return (ServiceConnection) MainActivity.this;
+//            }
+//
+//            @Override
+//            public void sendFunction(String message) {
+//                send(message);
+//            }
+//        });
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_container_view, mainPageFragment, null)
+                .add(R.id.fragment_container_view, MainPageFragment.class, null)
                 .commit();
 
 
@@ -101,127 +84,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         }
         else {
             List<Fragment> fragments = getSupportFragmentManager().getFragments();
-            getSupportFragmentManager().beginTransaction().remove(fragments.get(fragments.size() - 1)).commit();
             getSupportFragmentManager().beginTransaction().show(fragments.get(fragments.size() - 2)).commit();
+            getSupportFragmentManager().beginTransaction().remove(fragments.get(fragments.size() - 1)).commit();
         }
 
     }
 
-    interface MainActivityCommunicator{
-        void onWeekChanged(int numberOfWeek);
-    }
 
 
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (service != null) {
-            service.attach(this);
-        } else {
-            this.startService(new Intent(this, BluetoothArduinoService.class));
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        if (service != null && !this.isChangingConfigurations()) {
-            service.detach();
-        }
-        super.onStop();
-    }
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (service != null && initialStart) {
-            initialStart = false;
-            this.runOnUiThread(this::connect);
-        }
-    }
-
-    private void connect() {
-        try {
-            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
-            status("connecting...");
-            connected = Connected.Pending;
-            BluetoothArduinoSerialSocket socket = new BluetoothArduinoSerialSocket(this.getApplicationContext(), device);
-            service.connect(socket);
-        } catch (Exception e) {
-            onSerialConnectError(e);
-        }
-    }
-
-    private void disconnect() {
-        connected = Connected.False;
-        service.disconnect();
-    }
-
-    private void send(String message) {
-        if(connected != Connected.True) {
-            Toast.makeText(
-                    this, "not connected", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try {
-            service.write(message.getBytes());
-        } catch (Exception e) {
-            onSerialIoError(e);
-        }
-    }
-
-    private void receive(ArrayDeque<byte[]> datas) {
-    }
-
-    private void status(String str) {
-        Toast.makeText(service, str, Toast.LENGTH_SHORT).show();
-    }
-
-    private void showNotificationSettings() {
-        Intent intent = new Intent();
-        intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
-        intent.putExtra("android.provider.extra.APP_PACKAGE", MainActivity.this.getPackageName());
-        startActivity(intent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (Arrays.equals(permissions, new String[]{Manifest.permission.POST_NOTIFICATIONS}) &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !service.areNotificationsEnabled())
-            showNotificationSettings();
-    }
-
-    @Override
-    public void onSerialConnect() {
-        status("connected");
-        connected = Connected.True;
-    }
-
-    @Override
-    public void onSerialConnectError(Exception e) {
-        status("connection failed: " + e.getMessage());
-        disconnect();
-    }
-
-    @Override
-    public void onSerialRead(byte[] data) {
-        ArrayDeque<byte[]> datas = new ArrayDeque<>();
-        datas.add(data);
-        receive(datas);
-    }
-
-    public void onSerialRead(ArrayDeque<byte[]> datas) {
-        receive(datas);
-    }
-
-    @Override
-    public void onSerialIoError(Exception e) {
-        status("connection lost: " + e.getMessage());
-        disconnect();
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -232,29 +103,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 Toast.makeText(MainActivity.this, "Bluetooth is ON", Toast.LENGTH_SHORT).show();
                 break;
             case REQUEST_CONNECT_DEVICE:
-                deviceAddress = data.getStringExtra(SearchArduino.EXTRA_DEVICE_ADDRESS);
-                this.runOnUiThread(this::connect);
                 System.out.println("conected");
                 break;
             case RESULT_CANCELED:
                 Toast.makeText(MainActivity.this, ":(", Toast.LENGTH_SHORT).show();
         }
 
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder binder) {
-        service = ((BluetoothArduinoService.SerialBinder)binder).getService();
-        service.attach(this);
-        if (initialStart) {
-            initialStart = false;
-            this.runOnUiThread(this::connect);
-        }
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        service = null;
     }
 //
 //    private void connectDevice(Intent data) {
@@ -335,12 +189,4 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 //            throw new IllegalStateException(e);
 //        }
 //    }
-    public interface MainActivityInterface {
-    ServiceConnection getServiceConnection();
-    void sendFunction(String message);
-
-    void unregisterReceiver(BroadcastReceiver receiver);
-}
-
-
 }

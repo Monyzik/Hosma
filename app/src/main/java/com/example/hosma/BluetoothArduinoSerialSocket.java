@@ -1,5 +1,6 @@
 package com.example.hosma;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
@@ -29,8 +30,8 @@ public class BluetoothArduinoSerialSocket implements Runnable {
     private boolean connected;
 
     public BluetoothArduinoSerialSocket(Context context, BluetoothDevice device) {
-//        if (context != null)
-//            throw new InvalidParameterException("expected non UI context");
+        if (context instanceof Activity)
+            throw new InvalidParameterException("expected non UI context");
         this.context = context;
         this.device = device;
         disconnectBroadcastReceiver = new BroadcastReceiver() {
